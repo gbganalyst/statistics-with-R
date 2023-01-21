@@ -1,0 +1,80 @@
+---
+title: "Statistics with R"
+format: docx
+editor: visual
+editor_options: 
+  chunk_output_type: console
+  
+knitr:
+  opts_chunk:
+    #comment: "#>"
+    collapse: false
+---
+
+# Loading packages 
+
+In this section, we shall load all the necessary packages to enable us download and import the data.
+
+```{r}
+#| label: import-package
+#| warning: false
+
+if(!require("install.load")){
+  install.packages("install.load")
+}
+
+install.load::install_load(c("tidyverse", "janitor", "readxl", "openxlsx", "scales"))
+
+theme_set(theme_bw()) # ggplot theme set to theme_bw()
+```
+
+# Downloading data into local directory 
+
+We used `download.file()` function to download the data from the [ONS](https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/birthsdeathsandmarriages/conceptionandfertilityrates/datasets/conceptionstatisticsenglandandwalesreferencetables/2020/conceptions2020workbook.xlsx) website.  
+
+```{r}
+#| label: data-download
+#| eval: false
+
+link <- "https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/birthsdeathsandmarriages/conceptionandfertilityrates/datasets/conceptionstatisticsenglandandwalesreferencetables/2020/conceptions2020workbook.xlsx"
+
+download.file(link, "conceptions2020.xlsx", mode = "wb")
+```
+
+# Reading the data
+
+We then import data from the workbook and select the most important variables that would be needed for analysis from the data.
+
+```{r}
+#| label: conception-data
+#| 
+conception <- read.xlsx("conceptions2020.xlsx", sheet = "1a", startRow = 8, sep.names = " ") %>% # Select variables needed for the analysis
+  select(
+c("Year of conception", "All ages Number of conceptions", "Under 16 Number of conceptions", "Under 18 Number of conceptions", "Under 20 Number of conceptions", "20 to 24 Number of conceptions", "25 to 29 Number of conceptions", "30 to 34 Number of conceptions", "35 to 39 Number of conceptions", "40 and over Number of conceptions"))
+
+```
+
+We can see the information about the data by using:
+
+```{r}
+conception %>% 
+  dim()
+
+conception %>% 
+  names()
+```
+
+The trend of conception by year is shown in @fig-trend-line and it can be seen that the rate of conception is gradually decreasing from 2010 till 2020.
+
+```{r}
+#| label: fig-trend-line
+#| fig-cap: "Number of conceptions by year."
+#| fig-width: 6
+#| fig-height: 3.5
+
+
+conception %>% 
+  ggplot(aes(x = `Year of conception`, y = `All ages Number of conceptions`))+ geom_line()+scale_y_continuous(labels = label_number(suffix = "K", scale = 1e-3))+labs( y = "Number of conception", x = "Year")
+```
+
+
