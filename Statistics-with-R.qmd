@@ -64,7 +64,7 @@ conception %>%
   names()
 ```
 
-The trend of conception by year is shown in @fig-trend-line for all ages and it can be seen that the rate of conception is gradually decreasing from 2010 till 2020.
+The trend of conception by year is shown in @fig-trend-line for all ages and it can be seen that the rate of conception is gradually decreasing from 2010 till 2020. Also, conception for women in under 18 is higher compared to women in under 16.
 
 ```{r}
 #| label: fig-trend-line
@@ -72,12 +72,95 @@ The trend of conception by year is shown in @fig-trend-line for all ages and it 
 #| fig-width: 6
 #| fig-height: 3.5
 
-
-conception %>% 
-  ggplot(aes(x = `Year of conception`, y = `All ages Number of conceptions`))+ geom_line()+scale_y_continuous(labels = label_number(suffix = "K", scale = 1e-3))+labs( y = "Number of conception", x = "Year")
+conception %>%
+  ggplot(aes(x = `Year of conception`, y = `All ages Number of conceptions`)) +
+  geom_line() +
+  scale_y_continuous(labels = label_number(suffix = "K", scale = 1e-3)) +
+  labs(y = "Number of conception", x = "Year")
 ```
 
-The next thing now is to explore the rate ofdata:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABzElEQVR42u2Wy07CQBhGeRl3iF2Bz+DaRE0UNsYn0Z2vIE+hxLglMZq4IwYpV4G23JGrLS7GOTWsDEzbNMZFJ/l3c843l6bzx2L/aWhaaiehJTPxRPIysZe6DlIuKx24PIXuaqmDw+Ozm9u7e71QeHVKpbIIUrA4cOFU7vToJJOVkK3rFVEu/1SlUvVVaw4HLpxbd87R5HIPOlC1WhO1Wl3U6w23Go13T7WeD4sDF07cG4O5l2LxzQFC0my2RKvVFu22Icv0WIbLwOLAJZ2ruLZ/tXnH8qNgtUBITLMjOp2e6Hb7otcbeCrmwsDiwIUT99ZgJhqG5cL9/lAMh2MxGn2I8XjiqZgLA4sDF05lMKsEGAxGrmgymYnpdC5ms4WnYi4MLA5cOJXBHBGrBUQyny/FYvEplkvbUzEXBhYHLpzKYFbIUbFqBMhse+WrYGBx4MKpDObj4J5YMatH5DhfvgoGFgcunMpgvkyOiPta7zZIMCwOXDij4Cg4Cv6bYJ5F+V91wg42TUvxLMrHOp9/1MMOxrm1EaA9SacvspbVtcP6ZeLCqWz6aMxO0+fZp+cXdu4EfSRgceBSNnu/2lt5L4HbW1g/7W00ohHW+AYpkWmxvX/prAAAAABJRU5ErkJggg== conception by age group per year. We need to reshape our data in order to achieve this.
+The next thing now is to explore the rate of conceptions by age group per year. We need to reshape the data in order to achieve this.
+
+
+```{r}
+conception_reshape <- conception %>%
+  pivot_longer(cols = -(1:2), names_to = "age_group", values_to = "conception") %>%
+  mutate(age_group = str_remove_all(age_group, "Number.*")) %>%
+  select(-2)
+```
+
+The reshape data looks like this:
+
+```{r}
+conception_reshape %>% 
+  head()
+```
+
+In @fig-conception-reshape, the number of conceptions per year grows for women in the 25 to 29 age group compared to other groups.
+
+```{r}
+#| label: fig-conception-reshape
+#| fig-cap: "The trend analysis of number of conceptions by age group per year."
+#| fig-width: 6
+#| fig-height: 3.5
+
+conception_reshape %>% 
+  ggplot(aes(x = `Year of conception`, y = conception, col = age_group)) + geom_line() + labs(y = "Number of conceptions", col = "Age group") + scale_y_continuous(breaks = seq(0, 300000, 50000), labels = label_number(suffix = "K", scale = 1e-3))
+```
+
+# Teenage pregnancy
+
+In this section, we will examine conceptions leading to maternities and those that are terminated by abortion for the teenagers in the teenage pregnancy data shown below:
+
+
+```{r}
+#| label: teenage-pregnancy
+#| 
+teenage_pregnancy <- read.xlsx("conceptions2020.xlsx", sheet = "1b", startRow = 8, sep.names = " ") %>% # Select variables needed for the analysis
+  select(
+    c("Year of conception", "Under 14 Number of conceptions leading to maternities", "Under 14 Number of conceptions terminated by abortion", "Age 14 Number of conceptions leading to maternities", "Age 14 Number of conceptions terminated by abortion", "Age 15 Number of conceptions leading to maternities", "Age 15 Number of conceptions terminated by abortion", "Under 16 Number of conceptions leading to maternities", "Under 16 Number of conceptions terminated by abortion", "Age 16 Number of conceptions leading to maternities", "Age 16 Number of conceptions terminated by abortion", "Age 17 Number of conceptions leading to maternities", "Age 17 Number of conceptions terminated by abortion"))
+```
+We can see the information about some information that are useful in the data by using:
+  
+```{r}
+teenage_pregnancy %>% 
+  dim()
+
+teenage_pregnancy %>% 
+  names()
+```
+
+The next thing now is to explore the rate of conceptions by age group per year. We need to reshape the data in order to achieve this.
+
+
+```{r}
+teenage_pregnancy_reshape <- teenage_pregnancy %>%
+  pivot_longer(cols = -(1), names_to = "description", values_to = "statistics") %>% 
+  mutate(age_group = as_factor(str_trim(str_remove_all(description, "Number.*|Conceptions.*"))), conception = str_c("leading to ",  str_extract(description, "abortion|maternities")), .after = 1) %>% select(-description) 
+```
+
+The reshape data looks like this:
+
+```{r}
+teenage_pregnancy_reshape %>% 
+  head()
+```
+
+From @fig-teenage-pregnancy below there is a decrease in conception in the last 20 years (2000-2020). Conception in teenagers is higher with kids in their late teens compare to those in mid teens. Which explain that as teens approaches 18 years there is higher rate of conception. In addition,  more teenagers in mid teens are more likely to abort compare to those in their late teens. Which mean as teenagers approach age 18 they are more willing to go through maternity.
+
+```{r}
+#| label: fig-teenage-pregnancy
+#| fig-cap: "Conception by teenagers."
+#| fig-width: 12
+#| fig-height: 8
+#| 
+teenage_pregnancy_reshape %>% 
+  ggplot(aes(x= `Year of conception`, y = statistics, fill = conception)) + geom_col(position = position_dodge())+ facet_wrap(~age_group)+ labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS")
+```
+
+
+
+
 
 
 
