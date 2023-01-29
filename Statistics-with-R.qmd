@@ -10,15 +10,21 @@ editor_options:
 bibliography: references.bib
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      tidy = 'styler', 
+                      comment = NA,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
 # Introduction
 
-The question of whether age and marital status affect an individual's decision to continue with their pregnancy is debatable. This project would use statistical analysis with the help of R to ascertain whether age and marital status affect an individual's decision to abort or continue with their pregnancy by determining the conceptions that took place within marriages or civil partnerships and how many of these conceptions led to an abortion and also by determining how conceptions changed over the period (1998 -- 2020) under review both in and out of wedlock and within certain age categories.
+The question of whether age and marital status affect an individual's decision to continue with their pregnancy is debatable. This project would use statistical analysis with the help of R to ascertain whether age and marital status affect an individual's decision to abort or continue with their pregnancy by determining the conceptions that took place within marriages or civil partnerships and how many of these conceptions led to an abortion and also by determining how conceptions changed over the period (1998 - 2020) under review both in and out of wedlock and within certain age categories.
 
 The source of data used to carry out this analysis is the annual statistics on conceptions of residents of England and Wales which were released by the Office for National Statistics (ONS) on 14, April 2022. The following observations were made based on this data:
 
 There were 817,515 conceptions by women between the ages of 15 to 44 in England and Wales in 2020 which dropped consistently from 876,934 conceptions in 2015. Women between the ages of 30 to 34 had the highest number of conceptions in 2020 with 248,528 conceptions while women below the age of 16 had the lowest number of conceptions in 2020 with 2,085. It was further observed that in 2020 women between the ages 30 and 34 had the lowest percentage of conceptions leading to abortion at 17.4% and this percentage continuously increased for younger women as teenagers below the age of 16 had the highest percentage at 61.8%. As of 2020, England had the majority of conceptions with 780,013 conceptions whiles Wales had 37,500. A further breakdown of England's 780,013 conceptions as of 2020 revealed that London had the highest conceptions with 150,871 conceptions and with North East having the lowest conceptions at 32,664.
-
-In 46 states and New York City, the majority of women who had abortions (57%) were in their 20s. About one-third (31%) were in their 30s; teens between the ages of 13 to 19 accounted for 8%; and women in their 40s accounted for 4%. The vast majority of women who had abortions were unmarried (86%), while married women accounted for 14%, according to the CDC's Abortion Surveillance report. **(pls let's discuss about the reference format)**
 
 # Data preparation and pre-processing
 
@@ -83,8 +89,6 @@ The conceptions data is provided yearly and it runs from 1990 to 2020. The trend
 ```{r}
 #| label: fig-trend-line
 #| fig-cap: "Number of conceptions by year."
-#| fig-width: 6
-#| fig-height: 3.5
 
 conception %>%
   ggplot(aes(x = `Year of conception`, y = `All ages Number of conceptions`)) +
@@ -98,7 +102,8 @@ The next step is to explore the rate of conceptions by age group per year. We ne
 ```{r}
 conception_reshape <- conception %>%
   pivot_longer(cols = -(1:2), names_to = "age_group", values_to = "conception") %>%
-  mutate(age_group = str_remove_all(age_group, "Number.*")) %>%
+  mutate(age_group = factor(  str_trim(str_remove_all(age_group, "Number.*")),
+  levels = c("Under 16", "Under 18", "Under 20", "20 to 24", "25 to 29", "30 to 34", "35 to 39", "40 and over"))) %>%
   select(-2)
 ```
 
@@ -114,8 +119,6 @@ In @fig-conception-reshape, the number of conceptions per year grows for women i
 ```{r}
 #| label: fig-conception-reshape
 #| fig-cap: "The trend analysis of number of conceptions by age group per year."
-#| fig-width: 6
-#| fig-height: 3.5
 
 conception_reshape %>% 
   ggplot(aes(x = `Year of conception`, y = conception, col = age_group)) + geom_line() + labs(y = "Number of conceptions", col = "Age group") + scale_y_continuous(breaks = seq(0, 300000, 50000), labels = label_number(suffix = "K", scale = 1e-3))
@@ -123,15 +126,15 @@ conception_reshape %>%
 
 # Teenage pregnancy
 
-In this section, we will examine conceptions leading to maternities and those that are terminated by abortion for the teenagers in the teenage pregnancy data shown below:
+In this section, we will examine conceptions leading to maternity and those that are terminated by abortion for the teenagers in the teenage pregnancy data shown below:
 
 ```{r}
 #| label: teenage-conceptions
 #| 
 teenage_conceptions <- read.xlsx("conceptions2020.xlsx", sheet = "1b", startRow = 8, sep.names = " ") %>% # Select variables needed for the analysis
   select(
-    c("Year of conception", "Under 14 Number of conceptions leading to maternities", "Under 14 Number of conceptions terminated by abortion", "Age 14 Number of conceptions leading to maternities", "Age 14 Number of conceptions terminated by abortion", "Age 15 Number of conceptions leading to maternities", "Age 15 Number of conceptions terminated by abortion", "Under 16 Number of conceptions leading to maternities", "Under 16 Number of conceptions terminated by abortion", "Age 16 Number of conceptions leading to maternities", "Age 16 Number of conceptions terminated by abortion", "Age 17 Number of conceptions leading to maternities", "Age 17 Number of conceptions terminated by abortion", "Age 18 Number of conceptions leading to maternities", "Age 18 Number of conceptions terminated by abortion", "Age 19 Number of conceptions leading to maternities", "Age 19 Conceptions terminated by abortion"))
-
+    c("Year of conception", "Under 14 Number of conceptions leading to maternities", "Under 14 Number of conceptions terminated by abortion", "Age 14 Number of conceptions leading to maternities", "Age 14 Number of conceptions terminated by abortion", "Age 15 Number of conceptions leading to maternities", "Age 15 Number of conceptions terminated by abortion", "Under 16 Number of conceptions leading to maternities", "Under 16 Number of conceptions terminated by abortion", "Age 16 Number of conceptions leading to maternities", "Age 16 Number of conceptions terminated by abortion", "Age 17 Number of conceptions leading to maternities", "Age 17 Number of conceptions terminated by abortion", "Age 18 Number of conceptions leading to maternities", "Age 18 Number of conceptions terminated by abortion", "Age 19 Number of conceptions leading to maternities", "Age 19 Conceptions terminated by abortion")
+  )
 ```
 
 ```{r}
@@ -153,8 +156,9 @@ The next step is to explore the rate of conceptions by age group per year. We ne
 
 ```{r}
 teenage_conceptions_reshape <- teenage_conceptions %>%
-  pivot_longer(cols = -(1), names_to = "description", values_to = "statistics") %>% 
-  mutate(age_group = as_factor(str_trim(str_remove_all(description, "Number.*|Conceptions.*"))), conception = str_c("leading to ",  str_extract(description, "abortion|maternities")), .after = 1) %>% select(-description) 
+  pivot_longer(cols = -(1), names_to = "description", values_to = "statistics") %>%
+  mutate(age_group = as_factor(str_trim(str_remove_all(description, "Number.*|Conceptions.*"))), conception = str_c("leading to ", str_extract(description, "abortion|maternities")), .after = 1) %>%
+  select(-description)
 ```
 
 The reshaped data looks like this:
@@ -169,11 +173,13 @@ From @fig-teenage-pregnancy below there is a decrease in conception in the last 
 ```{r}
 #| label: fig-teenage-pregnancy
 #| fig-cap: "Conception by teenagers."
-#| fig-width: 12
-#| fig-height: 8
-#| 
-teenage_conceptions_reshape %>% 
-  ggplot(aes(x= `Year of conception`, y = statistics, fill = conception)) + geom_col(position = position_dodge()) + facet_wrap(~age_group) + labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") + scale_y_continuous( labels = label_number(suffix = "K", scale = 1e-3))
+
+teenage_conceptions_reshape %>%
+  ggplot(aes(x = `Year of conception`, y = statistics, fill = conception)) +
+  geom_col(position = position_dodge()) +
+  facet_wrap(~age_group) +
+  labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") +
+  scale_y_continuous(labels = label_number(suffix = "K", scale = 1e-3))
 
 ```
 
@@ -204,50 +210,34 @@ The reshape data looks like this:
 
 ```{r}
 conception_by_marriage_maternity_abortion <- function() {
-  conception_by_marriage = conception_by_marriage %>% 
+  conception_by_marriage <- conception_by_marriage %>%
     clean_names()
-  
-  maternity_abortion = conception_by_marriage %>% 
+
+  maternity_abortion <- conception_by_marriage %>%
     mutate(
       under_18_number_of_conceptions_leading_to_abortion = under_18_number_of_conceptions * under_18_percentage_of_conceptions_leading_to_abortion / 100,
-    
-    under_18_number_of_conceptions_leading_to_maternity = under_18_number_of_conceptions - under_18_number_of_conceptions_leading_to_abortion,
-
-      
-    under_20_number_of_conceptions_leading_to_abortion = under_20_number_of_conceptions * under_20_percentage_of_conceptions_leading_to_abortion / 100,
-    
-    under_20_number_of_conceptions_leading_to_maternity = under_20_number_of_conceptions - under_20_number_of_conceptions_leading_to_abortion,
-    
-    age_20_to_24_number_of_conceptions_leading_to_abortion = age_20_to_24_number_of_conceptions * age_20_to_24_percentage_of_conceptions_leading_to_abortion/100,
-    
-    age_20_to_24_number_of_conceptions_leading_to_maternity = age_20_to_24_number_of_conceptions - age_20_to_24_number_of_conceptions_leading_to_abortion,
-    
-    age_25_to_29_number_of_conceptions_leading_to_abortion = age_25_to_29_number_of_conceptions * age_25_to_29_percentage_of_conceptions_leading_to_abortion/100,
-    
-    age_25_to_29_number_of_conceptions_leading_to_maternity = age_25_to_29_number_of_conceptions - age_25_to_29_number_of_conceptions_leading_to_abortion,
-    
-    age_30_to_34_number_of_conceptions_leading_to_abortion = age_30_to_34_number_of_conceptions * age_30_to_34_percentage_of_conceptions_leading_to_abortion / 100,
-    
-    age_30_to_34_number_of_conceptions_leading_to_maternity = age_30_to_34_number_of_conceptions - age_30_to_34_number_of_conceptions_leading_to_abortion,  
-    
-    age_35_to_39_number_of_conceptions_leading_to_abortion = age_35_to_39_number_of_conceptions * age_35_to_39_percentage_of_conceptions_leading_to_abortion / 100,
-    
-    age_35_to_39_number_of_conceptions_leading_to_maternity = age_35_to_39_number_of_conceptions - age_35_to_39_number_of_conceptions_leading_to_abortion,      
-    
-    age_40_and_over_number_of_conceptions_leading_to_abortion = age_40_and_over_number_of_conceptions * age_40_and_over_percentage_of_conceptions_leading_to_abortion / 100,
-    
-    age_40_and_over_number_of_conceptions_leading_to_maternity = age_40_and_over_number_of_conceptions - age_40_and_over_number_of_conceptions_leading_to_abortion     
-    
+      under_18_number_of_conceptions_leading_to_maternity = under_18_number_of_conceptions - under_18_number_of_conceptions_leading_to_abortion,
+      under_20_number_of_conceptions_leading_to_abortion = under_20_number_of_conceptions * under_20_percentage_of_conceptions_leading_to_abortion / 100,
+      under_20_number_of_conceptions_leading_to_maternity = under_20_number_of_conceptions - under_20_number_of_conceptions_leading_to_abortion,
+      age_20_to_24_number_of_conceptions_leading_to_abortion = age_20_to_24_number_of_conceptions * age_20_to_24_percentage_of_conceptions_leading_to_abortion / 100,
+      age_20_to_24_number_of_conceptions_leading_to_maternity = age_20_to_24_number_of_conceptions - age_20_to_24_number_of_conceptions_leading_to_abortion,
+      age_25_to_29_number_of_conceptions_leading_to_abortion = age_25_to_29_number_of_conceptions * age_25_to_29_percentage_of_conceptions_leading_to_abortion / 100,
+      age_25_to_29_number_of_conceptions_leading_to_maternity = age_25_to_29_number_of_conceptions - age_25_to_29_number_of_conceptions_leading_to_abortion,
+      age_30_to_34_number_of_conceptions_leading_to_abortion = age_30_to_34_number_of_conceptions * age_30_to_34_percentage_of_conceptions_leading_to_abortion / 100,
+      age_30_to_34_number_of_conceptions_leading_to_maternity = age_30_to_34_number_of_conceptions - age_30_to_34_number_of_conceptions_leading_to_abortion,
+      age_35_to_39_number_of_conceptions_leading_to_abortion = age_35_to_39_number_of_conceptions * age_35_to_39_percentage_of_conceptions_leading_to_abortion / 100,
+      age_35_to_39_number_of_conceptions_leading_to_maternity = age_35_to_39_number_of_conceptions - age_35_to_39_number_of_conceptions_leading_to_abortion,
+      age_40_and_over_number_of_conceptions_leading_to_abortion = age_40_and_over_number_of_conceptions * age_40_and_over_percentage_of_conceptions_leading_to_abortion / 100,
+      age_40_and_over_number_of_conceptions_leading_to_maternity = age_40_and_over_number_of_conceptions - age_40_and_over_number_of_conceptions_leading_to_abortion
     )
-  
-  maternity_abortion %>% 
-    mutate(across(.cols = everything(), ~round(.))) %>% 
-    select(-c(2:15)) %>% mutate(
+
+  maternity_abortion %>%
+    mutate(across(.cols = everything(), ~ round(.))) %>%
+    select(-c(2:15)) %>%
+    mutate(
       marital_status = "within marriage or civil partnership"
     )
-  
 }
-
 
 ```
 
@@ -266,8 +256,15 @@ conception_by_marriage_maternity_abortion() %>%
 We need to reshape the data into $5$ variables that include `year of conception`, `age group`, `conception decision`, `statistics`, and `marital status`.
 
 ```{r}
-conception_by_marriage <- conception_by_marriage_maternity_abortion() %>% pivot_longer(cols = -c(1, 16), names_to = "description", values_to = "statistics") %>% mutate(age_group = str_trim(str_remove_all(description, "_number.*|age_")) %>% str_replace_all("_", " ") , conception_decision = str_extract(description, "leading_to_abortion|leading_to_maternity") %>% str_replace_all("_", " "), .after = 1) %>% select(-description) %>% relocate(statistics, .before = marital_status) 
-  
+conception_by_marriage <- conception_by_marriage_maternity_abortion() %>%
+  pivot_longer(cols = -c(1, 16), names_to = "description", values_to = "statistics") %>%
+  mutate(
+    age_group = str_trim(str_remove_all(description, "_number.*|age_")) %>% str_replace_all("_", " "),
+    conception_decision = str_extract(description, "leading_to_abortion|leading_to_maternity") %>% 
+      str_replace_all("_", " "), .after = 1
+    ) %>%
+  select(-description) %>%
+  relocate(statistics, .before = marital_status)
 ```
 
 ## Conceptions outside marriage or civil partnership
@@ -296,51 +293,35 @@ The reshape data looks like this:
 
 ```{r}
 conception_outsidemarriage_maternity_abortion <- function() {
-  conception_outside_marriage = conception_outside_marriage %>% 
+  conception_outside_marriage <- conception_outside_marriage %>%
     clean_names()
-  
-  conception_outside_marriage = conception_outside_marriage %>% 
+
+  conception_outside_marriage <- conception_outside_marriage %>%
     mutate(
-      under_16_number_of_conceptions_leading_to_abortion =    under_16_number_of_conceptions * age_under_16_percentage_of_conceptions_leading_to_abortion / 100,
-      
+      under_16_number_of_conceptions_leading_to_abortion = under_16_number_of_conceptions * age_under_16_percentage_of_conceptions_leading_to_abortion / 100,
       under_16_number_of_conceptions_leading_to_maternity = under_16_number_of_conceptions - under_16_number_of_conceptions_leading_to_abortion,
-      
-      under_18_number_of_conceptions_leading_to_abortion =    age_under_18_number_of_conceptions * age_under_18_percentage_of_conceptions_leading_to_abortion / 100,
-      
+      under_18_number_of_conceptions_leading_to_abortion = age_under_18_number_of_conceptions * age_under_18_percentage_of_conceptions_leading_to_abortion / 100,
       under_18_number_of_conceptions_leading_to_maternity = age_under_18_number_of_conceptions - under_18_number_of_conceptions_leading_to_abortion,
-      
-     under_20_number_of_conceptions_leading_to_abortion = age_under_20_number_of_conceptions * age_under_20_percentage_of_conceptions_leading_to_abortion / 100,
-      
+      under_20_number_of_conceptions_leading_to_abortion = age_under_20_number_of_conceptions * age_under_20_percentage_of_conceptions_leading_to_abortion / 100,
       under_20_number_of_conceptions_leading_to_maternity = age_under_20_number_of_conceptions - under_20_number_of_conceptions_leading_to_abortion,
-      
-      age_20_to_24_number_of_conceptions_leading_to_abortion = age_20_to_24_number_of_conceptions * age_20_to_24_percentage_of_conceptions_leading_to_abortion/100,
-      
+      age_20_to_24_number_of_conceptions_leading_to_abortion = age_20_to_24_number_of_conceptions * age_20_to_24_percentage_of_conceptions_leading_to_abortion / 100,
       age_20_to_24_number_of_conceptions_leading_to_maternity = age_20_to_24_number_of_conceptions - age_20_to_24_number_of_conceptions_leading_to_abortion,
-      
-      age_25_to_29_number_of_conceptions_leading_to_abortion = age_25_to_29_number_of_conceptions * age_25_to_29_percentage_of_conceptions_leading_to_abortion/100,
-      
+      age_25_to_29_number_of_conceptions_leading_to_abortion = age_25_to_29_number_of_conceptions * age_25_to_29_percentage_of_conceptions_leading_to_abortion / 100,
       age_25_to_29_number_of_conceptions_leading_to_maternity = age_25_to_29_number_of_conceptions - age_25_to_29_number_of_conceptions_leading_to_abortion,
-      
       age_30_to_34_number_of_conceptions_leading_to_abortion = age_30_to_34_number_of_conceptions * age_30_to_34_percentage_of_conceptions_leading_to_abortion / 100,
-      
-      age_30_to_34_number_of_conceptions_leading_to_maternity = age_30_to_34_number_of_conceptions - age_30_to_34_number_of_conceptions_leading_to_abortion,  
-      
+      age_30_to_34_number_of_conceptions_leading_to_maternity = age_30_to_34_number_of_conceptions - age_30_to_34_number_of_conceptions_leading_to_abortion,
       age_35_to_39_number_of_conceptions_leading_to_abortion = age_35_to_39_number_of_conceptions * age_35_to_39_percentage_of_conceptions_leading_to_abortion / 100,
-      
-      age_35_to_39_number_of_conceptions_leading_to_maternity = age_35_to_39_number_of_conceptions - age_35_to_39_number_of_conceptions_leading_to_abortion,      
-      
+      age_35_to_39_number_of_conceptions_leading_to_maternity = age_35_to_39_number_of_conceptions - age_35_to_39_number_of_conceptions_leading_to_abortion,
       age_40_and_over_number_of_conceptions_leading_to_abortion = age_40_and_over_number_of_conceptions * age_40_and_over_percentage_of_conceptions_leading_to_abortion / 100,
-      
-      age_40_and_over_number_of_conceptions_leading_to_maternity = age_40_and_over_number_of_conceptions - age_40_and_over_number_of_conceptions_leading_to_abortion     
-      
+      age_40_and_over_number_of_conceptions_leading_to_maternity = age_40_and_over_number_of_conceptions - age_40_and_over_number_of_conceptions_leading_to_abortion
     )
-  
-  conception_outside_marriage %>% 
-   mutate(across(.cols = everything(), ~round(.))) %>% 
-   select(-c(2:17)) %>% mutate(
-    marital_status = "outside marriage or civil partnership"
+
+  conception_outside_marriage %>%
+    mutate(across(.cols = everything(), ~ round(.))) %>%
+    select(-c(2:17)) %>%
+    mutate(
+      marital_status = "outside marriage or civil partnership"
     )
-  
 }
 
 ```
@@ -360,16 +341,27 @@ conception_outsidemarriage_maternity_abortion() %>%
 We need to reshape `conception_outsidemarriage_maternity_abortion` dataframe into $5$ variables that include `year of conception`, `age group`, `conception decision`, `statistics`, and `marital status`.
 
 ```{r}
-conception_not_by_marriage <- conception_outsidemarriage_maternity_abortion() %>% pivot_longer(cols = -c(1, 18), names_to = "description", values_to = "statistics") %>% mutate(age_group = str_trim(str_remove_all(description, "_number.*|age_")) %>% str_replace_all("_", " ") , conception_decision = str_extract(description, "leading_to_abortion|leading_to_maternity") %>% str_replace_all("_", " "), .after = 1) %>% select(-description) %>% relocate(statistics, .before = marital_status) 
-  
+conception_not_by_marriage <- conception_outsidemarriage_maternity_abortion() %>%
+  pivot_longer(cols = -c(1, 18), names_to = "description", values_to = "statistics") %>%
+  mutate(
+    age_group = str_remove_all(description, "_number.*|age_") %>% str_replace_all("_", " ") %>% str_trim(), 
+    conception_decision = str_extract(description, "leading_to_abortion|leading_to_maternity") %>% str_replace_all("_", " ") %>% as.factor(), .after = 1) %>%
+  select(-description) %>%
+  relocate(statistics, .before = marital_status)
 ```
 
 Now that we have the data for both conceptions leading to maternity and abortion by marriage and out of marriage, we then need to combine the data.
 
 ```{r}
-conception_data <-  conception_by_marriage %>% rbind(conception_not_by_marriage) %>% mutate(age_group = factor(age_group, levels = c("under 16", "under 18", "under 20", "20 to 24",  "25 to 29", "30 to 34", "35 to 39", "40 and over")))
+conception_data <- conception_by_marriage %>%
+  rbind(conception_not_by_marriage) %>%
+  mutate(
+    age_group = factor(age_group, levels = c("under 16", "under 18", "under 20", "20 to 24", "25 to 29", "30 to 34", "35 to 39", "40 and over")),
+    marital_status  = factor(marital_status),
+    conception_decision = factor(conception_decision)
+    )
 
-conception_data %>% 
+conception_data %>%
   glimpse()
 ```
 
@@ -393,8 +385,13 @@ conception_decision
 #| fig-width: 12
 #| fig-height: 8
 #| 
-conception_data %>% 
-    ggplot(aes(x= year_of_conception, y = statistics, fill = conception_decision)) + geom_col(position = position_dodge()) + facet_wrap(~marital_status) + labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") + scale_y_continuous( labels = label_number(breaks = seq(0, 150000, 50000), suffix = "K", scale = 1e-3)) + theme(legend.position = "bottom")
+conception_data %>%
+  ggplot(aes(x = year_of_conception, y = statistics, fill = conception_decision)) +
+  geom_col(position = position_dodge()) +
+  facet_wrap(~marital_status) +
+  labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") +
+  scale_y_continuous(labels = label_number(breaks = seq(0, 150000, 50000), suffix = "K", scale = 1e-3)) +
+  theme(legend.position = "bottom")
 ```
 
 The number of conceptions that lead to an abortion within marriage or civil partnerships is `r format(conception_decision[1, 3] %>% pull, scientific = FALSE)`
@@ -404,26 +401,29 @@ The number of conceptions that lead to an abortion within marriage or civil part
 ```{r}
 #| label: fig-conception-by-age-marital-status-1
 #| fig-cap: "Conception decision by age and marital status (Age under 16 to 24)."
-#| fig-width: 12
-#| fig-height: 8
 
-
-conception_data %>% 
-  filter(age_group %in% c("under 16", "under 18", "under 20", "20 to 24")) %>% 
-    ggplot(aes(x= year_of_conception, y = statistics, fill = conception_decision)) + geom_col(position = position_dodge()) + facet_grid(marital_status ~ age_group) + labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") + scale_y_continuous( labels = label_number(breaks = seq(0, 150000, 50000), suffix = "K", scale = 1e-3)) + theme(legend.position = "bottom")
+conception_data %>%
+  filter(age_group %in% c("under 16", "under 18", "under 20", "20 to 24")) %>%
+  ggplot(aes(x = year_of_conception, y = statistics, fill = conception_decision)) +
+  geom_col(position = position_dodge()) +
+  facet_grid(marital_status ~ age_group) +
+  labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") +
+  scale_y_continuous(labels = label_number(breaks = seq(0, 150000, 50000), suffix = "K", scale = 1e-3)) +
+  theme(legend.position = "bottom")
 ```
 
 ```{r}
 #| label: fig-conception-by-age-marital-status-2
 #| fig-cap: "Conception decision by age and marital status (Age 25 and above)."
-#| fig-width: 12
-#| fig-height: 8
-
-conception_data %>% 
-  filter(age_group %in% c( "25 to 29", "30 to 34", "35 to 39", "40 and over")) %>% 
-    ggplot(aes(x= year_of_conception, y = statistics, fill = conception_decision)) + geom_col(position = position_dodge()) + facet_grid(marital_status ~ age_group) + labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") + scale_y_continuous( labels = label_number(breaks = seq(0, 150000, 50000), suffix = "K", scale = 1e-3)) + theme(legend.position = "bottom")
+conception_data %>%
+  filter(age_group %in% c("25 to 29", "30 to 34", "35 to 39", "40 and over")) %>%
+  ggplot(aes(x = year_of_conception, y = statistics, fill = conception_decision)) +
+  geom_col(position = position_dodge()) +
+  facet_grid(marital_status ~ age_group) +
+  labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") +
+  scale_y_continuous(labels = label_number(breaks = seq(0, 150000, 50000), suffix = "K", scale = 1e-3)) +
+  theme(legend.position = "bottom")
 ```
-
 
 # Statistical Modelling
 
@@ -433,17 +433,193 @@ This science of getting computers to learn and act like humans do, and improve t
 
 Different approaches to implementing machine learning (ML) techniques are available. Notable among these are supervised learning, unsupervised learning, semi-supervised learning, and reinforcement learning methods.
 
+The supervised learning algorithms consist of a label and a set of features. The task is to learn a function that maps an input to an output based on an example of an input-to-output pair. A supervised learning algorithm analyses the training data and produces an inferred function for mapping test data or new input (X) to predict the output or label (Y).
 
-The supervised learning algorithms consist of a label and a set of features. The task is to learn a function that maps an input to an output based on an example of an input-to-output pair. A supervised learning algorithm analyses the training data and produces an inferred function for mapping test data or new input (X) to predict the output or label (Y). 
+The two examples of supervised learning techniques are classification and regression. The main difference between these two methods is that regression has the label of the data continuous while classification has the categorical label (or discrete). This work applied decision tree on `conception data` to predict whether whether conception will lead to maternity or abortion. The features are year of conception, age group, marital status and statistics (count of abortion or maternity) while the label is conception decision.
 
-The two examples of supervised learning techniques are classification and regression. The main difference between these two methods is that regression has the label of the data continuous while classification has the categorical label (or discrete). This work applied logistic regression on `conception data` to predict whether whether conception will lead to maternity or abortion.
+## One hot encoding
 
-```{r}
-#conception_data
+Before applying or fitting any model to the data numeric features in the datasets must be rescaled so they have a similar range of values. Rescaling prevents features from having an undue influence on model training simply because then have a larger range of numeric variables. Models such as Logistic, KNN, SVM, and neural network required a transformation of features to be centered and/or scaled before being used in such models [@ogundepo2023]. We, therefore, used the preProcess function in caret to transform features in the training set and applied it to the test set or future samples. We used the function argument `method = c('center', 'scale')` to do the transformation of each predictor. The 'predict' method for this class is then used to apply the processing to new samples [@kuhn2008].
+
+```{r One_hot_encoding_1}
+
+library(caret)
+# Removing the class column on train data to be able to create a one hot encoding
+
+conception_data_label <- conception_data %>% select(conception_decision)
+
+conception_data_features <- conception_data %>% select(-conception_decision)
+
+
+# `fullRank = T` to avoid dummmy trap
+
+dummies <- dummyVars("~.", data = conception_data_features, fullRank = TRUE)
+
+conception_data_features <- predict(dummies, newdata = conception_data_features)
+
+# Convert to dataframe
+
+conception_data_features <- as_tibble(conception_data_features)
+
 ```
 
+## Model building
 
-# Results presentation
+It is necessary when building supervised machine learning models to split our dataset into training and test data, the learning method should see only the training data to learn the relationship between the set of input (X) and label (Y). This learned information forms what is called a machine learning model. The caret function `createDataPartition` was used to create stratified random splits of the dataset. In this case, we used 80% of data for model training, and the remainder 20% was used for model evaluation or performance. The `functioncreateDataPartition` creates the random splits within each group or class so that the overall class distribution is preserved as well as possible[@kuhn2008].
+
+The model built is then used to predict the label (Y) in test data by looking only the input (X) of test data. The predicted values of Y is then compared to the known label (Y) in the test dataset to evaluate the performance of the model.
+
+```{r}
+
+model_data <- conception_data_features %>% bind_cols(conception_data_label) %>% mutate(conception_decision = 
+  make.names(conception_decision)
+) %>% clean_names()
+
+
+# Create the training and test datasets for the Cleveland dataset
+  
+split  <- sample(nrow(model_data), nrow(model_data) * 0.8)
+  
+train_conception_data <- model_data[split, ]
+  
+test_conception_data <- model_data[-split, ]
+
+# Store X and Y for later use
+  
+x_train <-  train_conception_data %>% select(-conception_decision)
+
+y_train <-  train_conception_data %>% select(conception_decision)
+
+
+xy_train <- train_conception_data
+  
+x_test <- test_conception_data %>% 
+  select(-conception_decision)
+  
+y_test <- test_conception_data %>% 
+  select(conception_decision)
+  
+# evaluation metrics
+
+# A function that generate data for class prediction probabilities and class prediction outcome
+
+pred_data <- function(pred_probs){
+  as_tibble(pred_probs) %>%
+    mutate(
+      # keep predicted probabilities for the positive class only
+      prob = leading.to.maternity,
+      class = names(.)[apply(., 1, which.max)]
+    )
+}
+
+
+# Logloss metric for evaluating performance of classifier
+
+logloss <- function(actual_class, pred_prob, eps = 1e-15) {
+  yhat <- pmin(pmax(pred_prob, eps), 1 - eps)
+  logloss <- -(mean(actual_class * log(yhat) + (1 - actual_class) * log(1 - yhat)))
+  return(logloss)
+}
+
+# fct_int convert factor class levels (present/ absent) to integer 0/1
+
+fct_int <- function (class_fct) {
+  class_int =  as.numeric(as.character(fct_recode(class_fct, '0' = 'leading.to.abortion',  '1' = 'leading.to.maternity')))
+  return(class_int)
+}
+
+# int_fct convert integer class (1/ 0) to factor class leading.to.maternity/leading.to.abortion
+
+int_fct <- function (class_int) {
+  class_fct = fct_recode(factor(class_int), 'leading.to.abortion' = '0',  'leading.to.maternity' = '1')
+  return(class_fct)
+}
+
+# Converting y_test to class integer
+  
+y_test <- fct_int(y_test %>% pull())
+
+
+
+# Building model
+
+d.tree.model <- train(conception_decision ~ ., data = xy_train, method = "rpart", trControl = trainControl(method = "cv", number = 10, returnResamp = "all"))
+
+d.tree_pred <- pred_data(pred_probs = predict(d.tree.model, x_test, type = "prob"))
+
+d.tree_class <- fct_int(d.tree_pred$class)
+
+```
+
+# Confusion matrix with some other metrics
+
+```{r confusion matrix}
+cm <- confusionMatrix(factor(d.tree_class), factor(y_test), positive = '1')
+
+cm$byClass[6] <- ModelMetrics::auc(y_test, d.tree_pred$prob)
+
+cm$byClass[11] <- logloss(y_test, d.tree_pred$prob)
+
+names(cm$byClass) = c("Sensitivity", "Specificity", "Pos Pred Value", "Neg Pred Value", "Precision", "AUC", "F1 score", "Prevalence", "Detection Rate", "Detection Prevalence", "logloss")
+
+conf_matrix_cust_plot <- function(cm_input, model_pred, class_label1 = "Class Negative", class_label2 = "Class Positive", quadrant_col1 = "#3F97D0", quadrant_col2 = "#F7AD50", custom_title = "Confusion matrix", text_col = "black", round_dig = 2) {
+  layout(matrix(c(1, 1, 2)))
+  par(mar = c(2, 2, 2, 2))
+  plot(c(100, 345), c(300, 450), type = "n", xlab = "", ylab = "", xaxt = "n", yaxt = "n")
+
+# n is specified in plot to indicate no plotting
+  title(custom_title, cex.main = 2)
+
+  # Create the matrix visualisation using custom rectangles and text items on the chart
+ rect(150, 430, 240, 370, col = '#009900')
+ text(195, 435, class_label1, cex = 1.2)
+ rect(250, 430, 340, 370, col = quadrant_col2)
+ text(295, 435, class_label2, cex = 1.2)
+  text(125, 370, "Predicted", cex = 1.3, srt = 90, font = 2)
+  text(245, 450, "Actual", cex = 1.3, font = 2)
+  rect(150, 305, 240, 365, col = quadrant_col2)
+  rect(250, 305, 340, 365, col = '#ff0000')
+  text(140, 400, class_label1, cex = 1.2, srt = 90)
+  text(140, 335, class_label2, cex = 1.2, srt = 90)
+
+# Add the results of the confusion matrix - as these will be saved to cm$table
+  result <- as.numeric(cm$table)
+  text(195, 400, result[1], cex = 1.6, font = 2, col = text_col)
+  text(195, 335, result[2], cex = 1.6, font = 2, col = text_col)
+  text(295, 400, result[3], cex = 1.6, font = 2, col = text_col)
+  text(295, 335, result[4], cex = 1.6, font = 2, col = text_col)
+
+# Add in other confusion matrix statistics
+  plot(c(100, 0), c(100, 0), type = "n", xlab = "", ylab = "",    main = "Model performance metrics", xaxt = "n", yaxt = "n")
+  text(10, 85, names(cm$byClass[1]), cex = 1.6, font = 2)
+  text(10, 70, round(as.numeric(cm$byClass[1]), round_dig), cex = 1.2)
+  text(30, 85, names(cm$byClass[2]), cex = 1.6, font = 2)
+  text(30, 70, round(as.numeric(cm$byClass[2]), round_dig), cex = 1.2)
+  text(50, 85, names(cm$byClass[5]), cex = 1.6, font = 2)
+  text(50, 70, round(as.numeric(cm$byClass[5]), round_dig), cex = 1.2)
+  text(65, 85, names(cm$byClass[6]), cex = 1.6, font = 2)
+  text(65, 70, round(as.numeric(cm$byClass[6]), round_dig), cex = 1.2)
+  text(86, 85, names(cm$byClass[11]), cex = 1.6, font = 2)
+  text(86, 70, round(as.numeric(cm$byClass[11]), round_dig), cex = 1.2)
+
+  # add in the accuracy information
+  text(30, 35, names(cm$overall[1]), cex = 1.5, font = 2)
+  text(30, 20, round(as.numeric(cm$overall[1]), 4), cex = 1.4)
+  text(70, 35, names(cm$byClass[7]), cex = 1.5, font = 2)
+  text(70, 20, round(as.numeric(cm$byClass[7]), round_dig), cex = 1.4)
+}
+
+
+conf_matrix_cust_plot(cm,
+  class_label1 = "abortion",
+  class_label2 = "maternity",
+  quadrant_col1 = "#009900",
+  quadrant_col2 = "#ec008e",
+  custom_title = "",
+  round_dig = 3
+)
+
+```
 
 Based on the analysis of conception decision by age group and marital status, it was observed that .....................
 
