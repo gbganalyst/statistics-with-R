@@ -1,20 +1,30 @@
 ---
 title: "Statistics with R"
-format: docx
-editor: visual
+format: 
+  docx:
+    fig-width: 12
+    fig-height: 8
+    reference-doc: custom-reference-doc.docx
 editor_options: 
   chunk_output_type: console
+bibliography: references.bib
 ---
 
 # Introduction
 
-Studies show that Age and Marital status influences affect the rate of conception and the decision of women to either commit abortion or go to maternity. Most teenager and adult have an active sexual life which spans among various age groups, however, when it comes to decisions about pregnancy and abortion, younger women are significantly more likely than older women to have an abortion, while older women are substantially less likely than their younger counterparts to have children.
+The question of whether age and marital status affect an individual's decision to continue with their pregnancy is debatable. This project would use statistical analysis with the help of R to ascertain whether age and marital status affect an individual's decision to abort or continue with their pregnancy by determining the conceptions that took place within marriages or civil partnerships and how many of these conceptions led to an abortion and also by determining how conceptions changed over the period (1998 -- 2020) under review both in and out of wedlock and within certain age categories.
 
-In $46$ states and New York City, the majority of women who had abortions ($57\%$) were in their $20$s. About three-in-ten ($31\%$) were in their $30$s; teens ages $13$ to $19$ accounted for $8\%$; and women in their $40$s accounted for $4\%$. The vast majority of women who had abortions were unmarried ($86\%$), while married women accounted for $14\%$, according to the CDC's Abortion Surveillance report.
+The source of data used to carry out this analysis is the annual statistics on conceptions of residents of England and Wales which were released by the Office for National Statistics (ONS) on 14, April 2022. The following observations were made based on this data:
 
-# Loading packages
+There were 817,515 conceptions by women between the ages of 15 to 44 in England and Wales in 2020 which dropped consistently from 876,934 conceptions in 2015. Women between the ages of 30 to 34 had the highest number of conceptions in 2020 with 248,528 conceptions while women below the age of 16 had the lowest number of conceptions in 2020 with 2,085. It was further observed that in 2020 women between the ages 30 and 34 had the lowest percentage of conceptions leading to abortion at 17.4% and this percentage continuously increased for younger women as teenagers below the age of 16 had the highest percentage at 61.8%. As of 2020, England had the majority of conceptions with 780,013 conceptions whiles Wales had 37,500. A further breakdown of England's 780,013 conceptions as of 2020 revealed that London had the highest conceptions with 150,871 conceptions and with North East having the lowest conceptions at 32,664.
 
-The first phase of data science is to import the data in R. In this case, we will import many packages that would enable us to do. 
+In 46 states and New York City, the majority of women who had abortions (57%) were in their 20s. About one-third (31%) were in their 30s; teens between the ages of 13 to 19 accounted for 8%; and women in their 40s accounted for 4%. The vast majority of women who had abortions were unmarried (86%), while married women accounted for 14%, according to the CDC's Abortion Surveillance report. **(pls let's discuss about the reference format)**
+
+# Data preparation and pre-processing
+
+## Loading packages
+
+The first phase of this analytical project is to import the data in R. In this case, we will import many packages that would enable us to import the data.
 
 ```{r}
 #| label: import-package
@@ -29,7 +39,7 @@ install.load::install_load(c("tidyverse", "janitor", "readxl", "openxlsx", "scal
 theme_set(theme_bw()) # ggplot theme set to theme_bw()
 ```
 
-# Downloading data into local directory
+## Downloading data into local directory
 
 We used `download.file()` function to download the data from the [ONS](https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/birthsdeathsandmarriages/conceptionandfertilityrates/datasets/conceptionstatisticsenglandandwalesreferencetables/2020/conceptions2020workbook.xlsx) website.
 
@@ -42,7 +52,7 @@ link <- "https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/birthsdea
 download.file(link, "conceptions2020.xlsx", mode = "wb")
 ```
 
-# Reading the data
+## Resulting data set
 
 We then import data from the workbook and select the most important variables that would be needed for analysis from the data.
 
@@ -68,7 +78,7 @@ conception %>%
   names()
 ```
 
-The conceptions data is a yearly data and it runs from $1990$ to $2020$. The trend of conception by year is shown in @fig-trend-line for all ages and it can be seen that the rate of conception is gradually decreasing from $2010$ till $2020$. Also, conception for women in under $18$ is higher compared to women in under $16$.
+The conceptions data is provided yearly and it runs from 1990 to 2020. The trend of conception by year is shown in @fig-trend-line for all ages and it can be seen that the rate of conception is gradually decreasing from 2010 till 2020. Also, conception for women under 18 is higher compared to women under 16.
 
 ```{r}
 #| label: fig-trend-line
@@ -83,7 +93,7 @@ conception %>%
   labs(y = "Number of conception", x = "Year")
 ```
 
-The next thing now is to explore the rate of conceptions by age group per year. We need to reshape the data in order to achieve this.
+The next step is to explore the rate of conceptions by age group per year. We need to reshape the data in order to achieve this.
 
 ```{r}
 conception_reshape <- conception %>%
@@ -99,7 +109,7 @@ conception_reshape %>%
   head()
 ```
 
-In @fig-conception-reshape, the number of conceptions per year grows for women in the $25$ to $29$ age group compared to other groups.
+In @fig-conception-reshape, the number of conceptions per year grows for women in the 25 to 29 age group compared to other groups.
 
 ```{r}
 #| label: fig-conception-reshape
@@ -129,7 +139,6 @@ teenage_conceptions %>%
   head()
 ```
 
-
 We can see the variables that are useful in the data by using:
 
 ```{r}
@@ -140,7 +149,7 @@ teenage_conceptions %>%
   names()
 ```
 
-The next thing now is to explore the rate of conceptions by age group per year. We need to reshape the data in order to achieve this.
+The next step is to explore the rate of conceptions by age group per year. We need to reshape the data in order to achieve this.
 
 ```{r}
 teenage_conceptions_reshape <- teenage_conceptions %>%
@@ -148,14 +157,14 @@ teenage_conceptions_reshape <- teenage_conceptions %>%
   mutate(age_group = as_factor(str_trim(str_remove_all(description, "Number.*|Conceptions.*"))), conception = str_c("leading to ",  str_extract(description, "abortion|maternities")), .after = 1) %>% select(-description) 
 ```
 
-The reshape data looks like this:
+The reshaped data looks like this:
 
 ```{r}
 teenage_conceptions_reshape %>% 
   head()
 ```
 
-From @fig-teenage-pregnancy below there is a decrease in conception in the last $20$ years ($2000$-$2020$). Conception in teenagers is higher with kids in their late teens compare to those in mid teens. Which explain that as teens approaches 18 years there is higher rate of conception. In addition, more teenagers in mid teens are more likely to abort compare to those in their late teens. Which mean as teenagers approach age 18 they are more willing to go through maternity.
+From @fig-teenage-pregnancy below there is a decrease in conception in the last 20 years (2000-2020). Conception in teenagers is higher with kids in their late teens compare to those in mid teens. This explains that as teens approaches 18 years there is higher rate of conception. In addition, more teenagers in mid teens are more likely to abort compare to those in their late teens. Which mean as teenagers approach age 18 they are more willing to go through maternity.
 
 ```{r}
 #| label: fig-teenage-pregnancy
@@ -247,7 +256,6 @@ conception_by_marriage_maternity_abortion() %>%
   head()
 ```
 
-
 The columns in the data then look like this:
 
 ```{r}
@@ -255,16 +263,14 @@ conception_by_marriage_maternity_abortion() %>%
   names()
 ```
 
-We need to reshape the data into $5$ variables that include `year of conception`, `age group`, `conception decision`,  `statistics`,  and `marital status`.
-
+We need to reshape the data into $5$ variables that include `year of conception`, `age group`, `conception decision`, `statistics`, and `marital status`.
 
 ```{r}
 conception_by_marriage <- conception_by_marriage_maternity_abortion() %>% pivot_longer(cols = -c(1, 16), names_to = "description", values_to = "statistics") %>% mutate(age_group = str_trim(str_remove_all(description, "_number.*|age_")) %>% str_replace_all("_", " ") , conception_decision = str_extract(description, "leading_to_abortion|leading_to_maternity") %>% str_replace_all("_", " "), .after = 1) %>% select(-description) %>% relocate(statistics, .before = marital_status) 
   
 ```
 
-
-## Conceptions outside marriage or civil partnership 
+## Conceptions outside marriage or civil partnership
 
 ```{r}
 #| label: conception-outside-marriage
@@ -344,7 +350,6 @@ conception_outsidemarriage_maternity_abortion() %>%
   head()
 ```
 
-
 The columns in the data then look like this:
 
 ```{r}
@@ -352,17 +357,14 @@ conception_outsidemarriage_maternity_abortion() %>%
   glimpse()
 ```
 
-We need to reshape `conception_outsidemarriage_maternity_abortion` dataframe into $5$ variables that include `year of conception`, `age group`, `conception decision`,  `statistics`,  and `marital status`.
-
+We need to reshape `conception_outsidemarriage_maternity_abortion` dataframe into $5$ variables that include `year of conception`, `age group`, `conception decision`, `statistics`, and `marital status`.
 
 ```{r}
 conception_not_by_marriage <- conception_outsidemarriage_maternity_abortion() %>% pivot_longer(cols = -c(1, 18), names_to = "description", values_to = "statistics") %>% mutate(age_group = str_trim(str_remove_all(description, "_number.*|age_")) %>% str_replace_all("_", " ") , conception_decision = str_extract(description, "leading_to_abortion|leading_to_maternity") %>% str_replace_all("_", " "), .after = 1) %>% select(-description) %>% relocate(statistics, .before = marital_status) 
   
 ```
 
-
 Now that we have the data for both conceptions leading to maternity and abortion by marriage and out of marriage, we then need to combine the data.
-
 
 ```{r}
 conception_data <-  conception_by_marriage %>% rbind(conception_not_by_marriage) %>% mutate(age_group = factor(age_group, levels = c("under 16", "under 18", "under 20", "20 to 24",  "25 to 29", "30 to 34", "35 to 39", "40 and over")))
@@ -371,10 +373,11 @@ conception_data %>%
   glimpse()
 ```
 
-# Graphical analysis of conception decision by age group and marital status
+# Data analysis
 
+## Graphical analysis of conception decision by age group and marital status
 
-## Which of the conceptions took place within marriage or civil partnerships and how many conceptions lead to an abortion? 
+### Which of the conceptions took place within marriage or civil partnerships and how many conceptions lead to an abortion?
 
 ```{r}
 conception_decision <- conception_data %>% 
@@ -382,8 +385,7 @@ conception_decision <- conception_data %>%
   summarise(total = sum(statistics)) %>% ungroup() %>% filter(marital_status != "outside marriage or civil partnership")
 
 conception_decision
-```  
-
+```
 
 ```{r}
 #| label: fig-conception-by-marital-status
@@ -397,8 +399,7 @@ conception_data %>%
 
 The number of conceptions that lead to an abortion within marriage or civil partnerships is `r format(conception_decision[1, 3] %>% pull, scientific = FALSE)`
 
-
-## How did conceptions change over this time period both in and out of wedlock and within certain age categories? 
+### How did conceptions change over this time period both in and out of wedlock and within certain age categories?
 
 ```{r}
 #| label: fig-conception-by-age-marital-status-1
@@ -422,3 +423,54 @@ conception_data %>%
   filter(age_group %in% c( "25 to 29", "30 to 34", "35 to 39", "40 and over")) %>% 
     ggplot(aes(x= year_of_conception, y = statistics, fill = conception_decision)) + geom_col(position = position_dodge()) + facet_grid(marital_status ~ age_group) + labs(y = "Number of conceptions", x = "Year", fill = "Conception", caption = "Source: ONS") + scale_y_continuous( labels = label_number(breaks = seq(0, 150000, 50000), suffix = "K", scale = 1e-3)) + theme(legend.position = "bottom")
 ```
+
+
+# Statistical Modelling
+
+This is a statistical method used to understand the relationship between different variables. It is often represented in a graph, and it examines how a dependent variable is affected by one or more independent variables [@cichosz2015].
+
+This science of getting computers to learn and act like humans do, and improve their learning over time in autonomous fashion, by feeding them data and information in the form of observations and real-world interactions is called machine learning.
+
+Different approaches to implementing machine learning (ML) techniques are available. Notable among these are supervised learning, unsupervised learning, semi-supervised learning, and reinforcement learning methods.
+
+
+The supervised learning algorithms consist of a label and a set of features. The task is to learn a function that maps an input to an output based on an example of an input-to-output pair. A supervised learning algorithm analyses the training data and produces an inferred function for mapping test data or new input (X) to predict the output or label (Y). 
+
+The two examples of supervised learning techniques are classification and regression. The main difference between these two methods is that regression has the label of the data continuous while classification has the categorical label (or discrete). This work applied logistic regression on `conception data` to predict whether whether conception will lead to maternity or abortion.
+
+```{r}
+#conception_data
+```
+
+
+# Results presentation
+
+Based on the analysis of conception decision by age group and marital status, it was observed that .....................
+
+Based on the analysis on how conceptions changed over this time period both in and out of wedlock and within certain age categories, it was observed that .....................
+
+# Conclusion
+
+# Reflection section
+
+This section would discuss this analytical project at a metal level by stating the motivation, challenges, learning points and justifications of the techniques and methods used during in carrying out the analysis.
+
+# Motivation
+
+The Research question of whether age and marital status affect an individual's decision to continue with their pregnancy is an extremely interesting topic that motivated me to carry out further analysis to gather insight.
+
+# Challenges
+
+One of the challenges I encountered was the difficulty in analyzing the ONS annual statistics on conceptions of residents of England and Wales dataset, as this dataset contained a huge amount of data that was messy and needed to be cleaned and processed before being put to use for the analysis. In addition, although the use of Regression analysis showed a correlation between the dependent variable (abortion) and the independent variables (age and marital status), it did not necessarily prove that a change in age and marital status affects the decision to abort or continue with a pregnancy and this posed a challenge.
+
+The learning point is that cleaning data is a significant aspect of this analytical project because the quality of the data determines the accuracy of the calculations. Even with statistical methods/techniques and data cleansing methods, if the input data is inaccurate, the observations from the analysis will also be inaccurate.
+
+# Learning points
+
+Cleaning data is a significant aspect of this analytical project because the quality of the data determines the accuracy of the calculations. Even with statistical techniques and data cleansing methods, if the input data is inaccurate, the predictions from the analysis will also be inaccurate.
+
+# Justification
+
+In order to efficiently analyze the ONS annual statistics on conceptions of residents of England and Wales dataset, the application of R was used. The decision to use R to carry out the analysis in this project is due to the following reasons: R is open-source and does not require any fees or license to use. In addition, R offers many features and packages which are suitable for carrying out statistical analysis. Finally, R offers a host of packages that assisted in the conversion of the messy and unstructured dataset into a structured format for analysis. The use of visualizations and Regression analysis assisted in understanding the relationship between different variables and gaining insight.
+
+# References
